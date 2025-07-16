@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Test</title>
+    <style>
+        /* --- General & Base Styles --- */
+        body {
+            font-family: 'Roboto Mono', monospace, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            color: #d4d4d4;
+            padding: 20px;
+            box-sizing: border-box;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #282828;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+            width: 90%;
+            max-width: 900px;
+            border: 1px solid #333;
+            position: relative;
+            padding-bottom: 120px; /* Increased padding for custom text area below */
+        }
+        h1 {
+            text-align: center;
+            color: #e0e0e0;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        /* --- Text Display Area --- */
+        #textDisplay {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #212121;
+            min-height: 150px;
+            overflow: hidden;
+            position: relative;
+            color: #a0a0a0;
+        }
+        #textDisplay span {
+            transition: color 0.05s linear, background-color 0.05s linear;
+        }
+
+        /* --- User Input Area --- */
+        #userInput {
+            width: calc(100% - 30px);
+            height: 120px;
+            font-size: 1.2em;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            resize: none;
+            outline: none;
+            margin-bottom: 20px;
+            background-color: #212121;
+            color: #d4d4d4;
+            caret-color: #88c0d0;
+        }
+        #userInput::placeholder {
+            color: #666;
+        }
+        #userInput:focus {
+            border-color: #88c0d0;
+            box-shadow: 0 0 0 3px rgba(136, 192, 208, 0.2);
+        }
+
+        /* --- Controls & Metrics --- */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #d4d4d4;
+            gap: 20px;
+        }
+        .metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .metrics div {
+            margin-bottom: 0;
+            font-weight: 400;
+        }
+
+        /* --- Buttons --- */
+        button {
+            background-color: #5e81ac;
+            color: #e0e0e0;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
+        }
+        button:hover {
+            background-color: #4c688b;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #4a4a4a;
+            color: #777;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- Typing Feedback --- */
+        .correct {
+            color: #a3be8c;
+        }
+        .incorrect {
+            background-color: rgba(191, 97, 106, 0.2);
+            color: #bf616a;
+            text-decoration: none;
+        }
+        .current-char {
+            background-color: #ebcb8b;
+            color: #212121;
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        /* --- Segmented Control for Time Period --- */
+        .time-period-selector {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            background-color: #3b4048;
+            border-radius: 6px;
+            overflow: hidden; /* Ensures rounded corners are applied to inner elements */
+            border: 1px solid #444;
+            z-index: 20; /* Ensure it's above other elements */
+        }
+
+        .time-period-selector.disabled {
+            opacity: 0.6;
+            pointer-events: none; /* Disable all interactions */
+        }
+
+        .time-period-selector label {
+            cursor: pointer;
+            padding: 8px 12px;
+            font-size: 0.9em;
+            color: #d4d4d4;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            flex-grow: 1; /* Distribute space evenly */
+            text-align: center;
+            border-right: 1px solid #444; /* Separator between buttons */
+        }
+
+        .time-period-selector label:last-child {
+            border-right: none; /* No border on the last item */
+        }
+
+        .time-period-selector input[type="radio"] {
+            display: none; /* Hide the actual radio button */
+        }
+
+        /* Style for the selected button */
+        .time-period-selector input[type="radio"]:checked + label {
+            background-color: #5e81ac; /* Highlight background */
+            color: #e0e0e0;
+            font-weight: bold;
+        }
+
+        /* Hover effect for unselected buttons */
+        .time-period-selector input[type="radio"]:not(:checked) + label:hover {
+            background-color: rgba(136, 192, 208, 0.2);
+        }
+
+        /* --- Custom Text Input Option --- */
+        .custom-text-option {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #a0a0a0;
+            z-index: 10;
+        }
+        .custom-text-option input[type="checkbox"] {
+            accent-color: #88c0d0;
+            cursor: pointer;
+        }
+        .custom-text-area-wrapper {
+            position: absolute; /* Position relative to container */
+            bottom: 60px; /* Adjust to be above custom-text-option and time-select */
+            left: 20px;
+            right: 20px;
+            display: none; /* Hidden by default */
+            z-index: 5; /* Lower z-index than options, higher than buttons */
+        }
+        .custom-text-area-wrapper.active {
+            display: block; /* Show when active */
+        }
+        #customParagraphInput {
+            width: calc(100% - 20px); /* Account for padding */
+            min-height: 80px; /* Reduced min-height */
+            max-height: 150px; /* Reduced max-height */
+            font-size: 1.1em;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background-color: #212121;
+            color: #d4d4d4;
+            resize: vertical;
+            outline: none;
+            box-sizing: border-box; /* Include padding and border in width/height */
+        }
+        #customParagraphInput::placeholder {
+            color: #666;
+        }
+        #customParagraphInput:focus {
+            border-color: #88c0d0;
+            box-shadow: 0 0 0 3px rgba(136, 192, 208, 0.2);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Typing Master</h1>
+
+        <div id="textDisplay">
+            </div>
+
+        <textarea id="userInput" placeholder="Start typing here..." autofocus></textarea>
+
+        <div class="controls">
+            <div class="metrics">
+                <div id="timer">Time: 00:00</div>
+                <div id="accuracy">Accuracy: 100.00%</div>
+                <div id="wpm">WPM: 0</div>
+            </div>
+            <button id="startButton">Start Test</button>
+            <button id="resetButton" style="display: none;">Reset Test</button>
+        </div>
+
+        <div class="time-period-selector" id="timePeriodSelector">
+            </div>
+
+        <div class="custom-text-option">
+            <label>
+                <input type="checkbox" id="useCustomTextCheckbox"> Use Custom Text
+            </label>
+        </div>
+
+        <div class="custom-text-area-wrapper" id="customTextAreaWrapper">
+            <textarea id="customParagraphInput" placeholder="Type or paste your custom paragraph here."></textarea>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const textDisplay = document.getElementById('textDisplay');
+        const userInput = document.getElementById('userInput');
+        const timerElement = document.getElementById('timer');
+        const accuracyElement = document.getElementById('accuracy');
+        const wpmElement = document.getElementById('wpm');
+        const startButton = document.getElementById('startButton');
+        const resetButton = document.getElementById('resetButton');
+
+        // Segmented Control Elements
+        const timePeriodSelector = document.getElementById('timePeriodSelector');
+
+        // Custom Text Elements
+        const useCustomTextCheckbox = document.getElementById('useCustomTextCheckbox');
+        const customTextAreaWrapper = document.getElementById('customTextAreaWrapper');
+        const customParagraphInput = document.getElementById('customParagraphInput');
+
+        // --- Test Paragraph ---
+        const defaultParagraph = "life is a journey filled with ups and downs and every person walks a path that is unique to them sometimes the road is smooth and easy and everything feels like it is going your way but other times challenges appear and you have to gather your strength to keep moving forward even when you feel tired or uncertain there are moments when you might feel like giving up but those are the times when it is most important to keep going because every step you take no matter how small brings you closer to where you want to be learning from your mistakes growing from your experiences and staying true to your purpose are the things that help you become stronger over time the people you meet the lessons you learn and the choices you make all shape your story and your story is something that no one else can write for you each day gives you a chance to start fresh to try again and to move with a little more hope and confidence than the day before do not worry if progress feels slow because even small improvements add up and with patience and effort you will reach your goals always remember that you have the power to change your future by the actions you take today so keep going keep learning and never stop believing in yourself because you are capable of more than you think and the world is waiting to see all the amazing things you can do";
+
+        let activeParagraph = defaultParagraph;
+
+        // --- Time Period Definitions ---
+        const timePeriods = [
+            { value: 120, label: "2 Min" },
+            { value: 300, label: "5 Min" },
+            { value: 600, label: "10 Min" },
+            { value: 0, label: "Free Mode" }
+        ];
+
+        // --- State Variables for Line-by-Line Display ---
+        let paragraphLines = [];
+        const linesToShow = 3;
+        let currentLineIndex = 0;
+        let currentParagraphText = ''; // The concatenation of the current 'linesToShow' lines
+
+        // --- General Test State Variables ---
+        let startTime;
+        let timerInterval;
+        let running = false;
+        let totalErrors = 0; // Cumulative errors over entire test
+        let totalTypedCharacters = 0; // Cumulative characters user has actually typed
+        let totalCorrectCharacters = 0; // Cumulative correct characters
+        let maxTime = 0; // Default to Free Mode (0 for no time limit)
+
+        // --- Functions ---
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const formattedMinutes = String(minutes).padStart(2, '0');
+            const formattedSeconds = String(seconds).padStart(2, '0');
+            return `${formattedMinutes}:${formattedSeconds}`;
+        }
+
+        function splitParagraphIntoLines(text, charsPerLine = 70) {
+            if (!text || text.trim() === '') {
+                // If text is empty, return a placeholder line
+                return ["Start typing in the custom text area to begin practice!"];
+            }
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+
+            words.forEach(word => {
+                if ((currentLine + word).length + 1 > charsPerLine && currentLine.length > 0) {
+                    lines.push(currentLine.trim());
+                    currentLine = word + ' ';
+                } else {
+                    currentLine += word + ' ';
+                }
+            });
+            if (currentLine.length > 0) {
+                lines.push(currentLine.trim());
+            }
+            return lines;
+        }
+
+        function formatTextSegmentForDisplay(textSegment) {
+            let formattedHtml = '';
+            textSegment.split('').forEach(char => {
+                formattedHtml += `<span>${char}</span>`;
+            });
+            return formattedHtml;
+        }
+
+        function updateDisplayLines() {
+            let displaySegment = '';
+            currentParagraphText = ''; // Reset for new segment
+
+            for (let i = 0; i < linesToShow; i++) {
+                const lineIndex = currentLineIndex + i;
+                if (lineIndex < paragraphLines.length) {
+                    displaySegment += paragraphLines[lineIndex] + ' ';
+                    currentParagraphText += paragraphLines[lineIndex] + ' ';
+                }
+            }
+            currentParagraphText = currentParagraphText.trim();
+
+            textDisplay.innerHTML = formatTextSegmentForDisplay(currentParagraphText);
+            // Apply feedback for the current (possibly empty) input on the newly displayed lines
+            applyTypingFeedback(userInput.value); 
+        }
+
+        // Calculates correct/incorrect characters for a given typed segment against its target
+        function calculateCurrentSegmentFeedback(typedInput, targetText) {
+            let currentCorrect = 0;
+            let currentIncorrect = 0;
+            const len = Math.min(typedInput.length, targetText.length);
+
+            for (let i = 0; i < len; i++) {
+                if (typedInput[i] === targetText[i]) {
+                    currentCorrect++;
+                } else {
+                    currentIncorrect++;
+                }
+            }
+            // Any extra characters typed beyond the target text are considered incorrect
+            if (typedInput.length > targetText.length) {
+                currentIncorrect += (typedInput.length - targetText.length);
+            }
+            return { correct: currentCorrect, incorrect: currentIncorrect, typed: typedInput.length };
+        }
+
+        function checkLineCompletion() {
+            const currentTypedSegment = userInput.value;
+            const currentTargetSegment = currentParagraphText;
+
+            // Handle cases where the target segment might be empty (e.g., truly empty custom text, or end of default paragraph)
+            if (currentTargetSegment.length === 0) {
+                // If the entire active paragraph is effectively empty (only placeholder or empty custom text)
+                if (activeParagraph.trim() === "" || (paragraphLines.length === 1 && paragraphLines[0] === "Start typing in the custom text area to begin practice!")) {
+                    // Only finish if the user hasn't typed anything meaningful
+                    if (currentTypedSegment.length === 0) {
+                        finishTest();
+                        return;
+                    }
+                } else {
+                    // If target is empty, but the actual paragraph isn't (means we've run out of lines)
+                    finishTest();
+                    return;
+                }
+            }
+
+            // A line is considered 'completed' only if:
+            // 1. The typed segment matches the target segment up to the length of the target.
+            // 2. The typed segment's length is >= target segment's length.
+            const isMatch = currentTypedSegment.slice(0, currentTargetSegment.length) === currentTargetSegment;
+
+            if (isMatch && currentTypedSegment.length >= currentTargetSegment.length) {
+                // Calculate feedback for the *completed line*
+                const completedLineFeedback = calculateCurrentSegmentFeedback(currentTypedSegment, currentTargetSegment);
+                
+                // Accumulate to global totals
+                totalCorrectCharacters += completedLineFeedback.correct;
+                totalErrors += completedLineFeedback.incorrect;
+                totalTypedCharacters += completedLineFeedback.typed; // Accumulate actual typed characters
+
+                currentLineIndex += linesToShow; // Move to the next set of lines
+                userInput.value = ''; // Clear input for next line
+
+                if (currentLineIndex < paragraphLines.length) {
+                    updateDisplayLines(); // Load next lines
+                } else {
+                    finishTest(); // All lines completed for the chosen paragraph
+                }
+            }
+        }
+
+        function startTimer() {
+            if (running) return;
+            running = true;
+            startTime = new Date().getTime();
+            timerInterval = setInterval(() => {
+                const currentTime = new Date().getTime();
+                const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+                timerElement.textContent = `Time: ${formatTime(elapsedTime)}`;
+                
+                // Update WPM and Accuracy live based on current input and cumulative totals
+                updateMetrics(elapsedTime, userInput.value); 
+
+                if (maxTime > 0 && elapsedTime >= maxTime) {
+                    finishTest();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            running = false;
+        }
+
+        // Consolidated metric update function for live feedback
+        function updateMetrics(elapsedTime, currentInput) {
+            const currentFeedback = calculateCurrentSegmentFeedback(currentInput, currentParagraphText);
+            
+            // Combine cumulative totals with current line's feedback for live display
+            const liveCorrectChars = totalCorrectCharacters + currentFeedback.correct;
+            const liveTotalTypedChars = totalTypedCharacters + currentFeedback.typed;
+            // const liveTotalErrors = totalErrors + currentFeedback.incorrect; // Not used for display directly
+
+            // Accuracy calculation
+            const overallAccuracy = liveTotalTypedChars === 0 ? 100 : (liveCorrectChars / liveTotalTypedChars) * 100;
+            accuracyElement.textContent = `Accuracy: ${overallAccuracy.toFixed(2)}%`;
+
+            // WPM calculation (Gross WPM)
+            if (elapsedTime === 0) {
+                wpmElement.textContent = `WPM: 0`;
+                return;
+            }
+            const wordsTyped = liveCorrectChars / 5; // Standard WPM calculation (5 chars per word)
+            const minutes = elapsedTime / 60;
+            const wpm = minutes === 0 ? 0 : Math.round(wordsTyped / minutes);
+            wpmElement.textContent = `WPM: ${wpm}`;
+        }
+
+        function applyTypingFeedback(inputText) {
+            const spans = textDisplay.querySelectorAll('span');
+            spans.forEach((span, index) => {
+                const targetChar = currentParagraphText[index];
+                const typedChar = inputText[index];
+
+                span.classList.remove('correct', 'incorrect', 'current-char');
+
+                if (index < inputText.length) {
+                    if (typedChar === targetChar) {
+                        span.classList.add('correct');
+                    } else {
+                        span.classList.add('incorrect');
+                    }
+                } else if (index === inputText.length) {
+                    span.classList.add('current-char');
+                }
+            });
+        }
+
+        function resetTest() {
+            stopTimer();
+            userInput.value = '';
+            timerElement.textContent = `Time: 00:00`;
+            accuracyElement.textContent = `Accuracy: 100.00%`;
+            wpmElement.textContent = `WPM: 0`;
+            totalErrors = 0;
+            totalTypedCharacters = 0;
+            totalCorrectCharacters = 0;
+            currentLineIndex = 0;
+            userInput.disabled = true;
+            startButton.style.display = 'inline-block';
+            resetButton.style.display = 'none';
+            
+            timePeriodSelector.classList.remove('disabled'); // Enable time selector
+            useCustomTextCheckbox.disabled = false; // Enable custom text checkbox
+            customParagraphInput.disabled = false; // Enable custom text input
+            
+            // Re-initialize paragraph based on checkbox state
+            activeParagraph = useCustomTextCheckbox.checked ? customParagraphInput.value : defaultParagraph;
+            paragraphLines = splitParagraphIntoLines(activeParagraph);
+            updateDisplayLines(); // Ensure text is displayed on reset
+            
+            userInput.classList.remove('finished-test');
+        }
+
+        function finishTest() {
+            stopTimer();
+            userInput.disabled = true;
+            startButton.style.display = 'none';
+            resetButton.style.display = 'inline-block';
+            
+            timePeriodSelector.classList.remove('disabled'); // Enable time selector
+            useCustomTextCheckbox.disabled = false; // Enable custom text checkbox
+            customParagraphInput.disabled = false; // Enable custom text input
+            
+            userInput.classList.add('finished-test');
+
+            const finalTime = Math.floor((new Date().getTime() - startTime) / 1000);
+            updateMetrics(finalTime, userInput.value); // Ensure final metrics are updated
+            // Capture final values before textDisplay might change
+            const finalWPM = wpmElement.textContent.replace('WPM: ', '');
+            const finalAccuracy = accuracyElement.textContent.replace('Accuracy: ', '');
+
+
+            const spans = textDisplay.querySelectorAll('span');
+            spans.forEach(span => span.classList.remove('current-char'));
+
+            textDisplay.innerHTML = `<p style="text-align: center; font-size: 1.5em; color: #a3be8c;">Test Completed!</p>
+                                     <p style="text-align: center; font-size: 1.2em; color: #d4d4d4;">Your final WPM: ${finalWPM}</p>
+                                     <p style="text-align: center; font-size: 1.2em; color: #d4d4d4;">Your final Accuracy: ${finalAccuracy}</p>`;
+        }
+
+        // --- Segmented Control Logic ---
+        function generateTimePeriodOptions() {
+            timePeriodSelector.innerHTML = ''; // Clear existing options
+            timePeriods.forEach(period => {
+                const radioInput = document.createElement('input');
+                radioInput.type = 'radio';
+                radioInput.id = `time-${period.value}`;
+                radioInput.name = 'timePeriod';
+                radioInput.value = period.value;
+
+                const label = document.createElement('label');
+                label.htmlFor = `time-${period.value}`;
+                label.textContent = period.label;
+
+                if (period.value === maxTime) {
+                    radioInput.checked = true; // Mark as checked
+                }
+
+                radioInput.addEventListener('change', () => {
+                    if (radioInput.checked) {
+                        maxTime = parseInt(radioInput.value); // Update maxTime
+                    }
+                });
+
+                timePeriodSelector.appendChild(radioInput);
+                timePeriodSelector.appendChild(label);
+            });
+        }
+
+        // --- Custom Text Input Logic ---
+        useCustomTextCheckbox.addEventListener('change', () => {
+            if (useCustomTextCheckbox.checked) {
+                customTextAreaWrapper.classList.add('active');
+                activeParagraph = customParagraphInput.value;
+                if (!activeParagraph || activeParagraph.trim() === '') {
+                    customParagraphInput.focus();
+                }
+            } else {
+                customTextAreaWrapper.classList.remove('active');
+                activeParagraph = defaultParagraph;
+            }
+            paragraphLines = splitParagraphIntoLines(activeParagraph);
+            currentLineIndex = 0; // Reset index when text source changes
+            updateDisplayLines(); // Update display with new text
+        });
+
+        customParagraphInput.addEventListener('input', () => {
+            if (useCustomTextCheckbox.checked) {
+                activeParagraph = customParagraphInput.value;
+                paragraphLines = splitParagraphIntoLines(activeParagraph);
+                currentLineIndex = 0; // Reset index when custom text changes
+                updateDisplayLines(); // Update display with new custom text
+            }
+        });
+
+
+        // --- Event Listeners for Test Controls ---
+        startButton.addEventListener('click', () => {
+            activeParagraph = useCustomTextCheckbox.checked ? customParagraphInput.value : defaultParagraph;
+
+            if (useCustomTextCheckbox.checked && (!activeParagraph || activeParagraph.trim() === '')) {
+                alert("Please type some custom text in the box or uncheck 'Use Custom Text' to use the default paragraph.");
+                resetTest(); // Call reset to put UI back to start state
+                return;
+            }
+
+            userInput.disabled = false;
+            userInput.focus();
+            startButton.style.display = 'none';
+            resetButton.style.display = 'inline-block';
+            
+            timePeriodSelector.classList.add('disabled'); // Disable time selector
+            useCustomTextCheckbox.disabled = true;
+            customParagraphInput.disabled = true;
+            customTextAreaWrapper.classList.remove('active'); // Hide custom text area during test
+
+            paragraphLines = splitParagraphIntoLines(activeParagraph);
+            currentLineIndex = 0; // Ensure line index is reset for start
+            updateDisplayLines(); // Load initial lines for the test
+
+            startTimer();
+            // Initial call to update metrics immediately (elapsedTime is 0, currentInput is empty)
+            updateMetrics(0, userInput.value); 
+        });
+
+        resetButton.addEventListener('click', resetTest);
+
+        userInput.addEventListener('input', (e) => {
+            const currentTime = new Date().getTime();
+            // Ensure elapsedTime is calculated correctly even if timer hasn't started yet (e.g., first character)
+            const elapsedTime = running ? Math.floor((currentTime - startTime) / 1000) : 0;
+
+            // Start timer if not running and user starts typing
+            if (!running && e.target.value.length > 0) {
+                startTimer();
+                // Disable options only once test starts properly
+                userInput.disabled = false; // Already enabled by startButton, but good for safety
+                startButton.style.display = 'none';
+                resetButton.style.display = 'inline-block';
+                timePeriodSelector.classList.add('disabled');
+                useCustomTextCheckbox.disabled = true;
+                customParagraphInput.disabled = true;
+                customTextAreaWrapper.classList.remove('active');
+            }
+
+            const inputText = e.target.value;
+
+            // Update metrics immediately on input change
+            updateMetrics(elapsedTime, inputText);
+
+            applyTypingFeedback(inputText);
+
+            checkLineCompletion();
+        });
+
+        // --- Initial Setup ---
+        window.onload = () => {
+            maxTime = timePeriods[timePeriods.length - 1].value; // Default to Free Mode
+            generateTimePeriodOptions(); // Generate the segmented control options
+
+            activeParagraph = defaultParagraph;
+            paragraphLines = splitParagraphIntoLines(activeParagraph);
+            updateDisplayLines(); // Display the initial paragraph text
+            
+            userInput.disabled = true; // Disable input until test starts
+        };
+    </script>
+
+
+ 
+  <style>
+    body {
+      margin: 0;
+      padding: 0px;
+      background: linear-gradient(to bottom, #0a0a0a, #1a1a1a); /* dark gradient */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .fancy-name {
+      font-size: 8px; /* Very small */
+      font-weight: bold;
+      color: #5783AE;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 2px 6px;
+      border: 1.5px solid #5783AE;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02); /* subtle glassy effect */
+      box-shadow: 0 0 10px rgba(74, 144, 226, 0.2);
+      text-shadow: 1px 1px 1px rgba(74, 144, 226, 0.3);
+      backdrop-filter: blur(2px);
+    }
+  </style>
+  <div class="fancy-name">Made by ᎪᴅɪᴛʏA</div>
+</body>
+</html>
+</body>
+</html>
